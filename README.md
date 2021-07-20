@@ -25,3 +25,8 @@ For the original derivation or the dimensional equations, see: [Zeitlin, V. (201
 For no influence of the magnetic field, set $`M=0`$. For no free-surface, set $`F=0`$ (length scales much smaller than the radius of deformation).
 
 Perturbations are evolved on a doubly periodic rectangle using a spectral method (FFTW) with a smooth filter and AB3 timestepping.
+
+
+Example plot: Vorticity snapshot of an unstable Bickley jet (without any magnetism) in the nonlinear regime. 
+
+<img src="Images/jet.png" alt="" width="500"/>
