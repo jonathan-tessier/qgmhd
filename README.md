@@ -2,7 +2,9 @@
 
 This repository contains a variety of codes to study Magnetohydrodynamics. 
 
-The current code solves the rotating, incompressible, shallow MHD equations formulated for the potential vorticity $`q`$, and magnetic streamfunction $`A`$:
+The current code solves the rotating, incompressible, shallow MHD equations formulated for the potential vorticity $`q`$, and magnetic streamfunction $`A`$, by substracting a stationary background state $`(\bar q ,\bar A)`$ from the fields and evolving their doubly-periodic pertubations $`(q' ,A')`$, where $`q = \bar q + q'`$, $`A = \bar A + A'`$.
+
+The nonlinear equations read:
 
    $`\partial_t q + {\bf u}  \cdot {\bf \nabla} q =  M^2 {\bf b} \cdot {\bf \nabla}  \left( \nabla^2 A \right) + \frac{1}{R_e}\nabla^2q,`$
 
@@ -16,14 +18,10 @@ The nondimensional parameters are
 
    $`F = \frac{L}{R_d}, \quad M = \frac{V}{U}, \quad R_e = \frac{\nu}{UL}, \quad R_m = \frac{\kappa}{UL}`$
    
-where $`R_d, V, \nu, \kappa`$ are the external Rossby radius of deformation, the Aflvèn wave speed, the viscosity and magnetic diffusivity, respectively. 
+where $`R_d=\sqrt{gh}/f_0,`$ and $`V=B_0/\sqrt{\mu\rho}`$ are the external Rossby radius of deformation and the Aflvèn wave speed, respectively, for gravity ($`g`$), depth ($`h`$), Coriolis frequency $`f_0`$, magnetic field strength ($`B_0`$), magnetic permeability ($`\mu`$) and fluid density ($`\rho`$). $`R_e`$ and $`R_m`$ are the hydrodynamic and magnetic Reynolds numbers with viscosity ($`\nu`$) and magnetic diffusivity ($`\kappa`$). 
 
-For the original derivation or the dimensional equations, see: 
+For the original derivation or the dimensional equations, see: [Zeitlin, V. (2013). Remarks on rotating shallow-water magnetohydrodynamics.](https://www.semanticscholar.org/paper/Remarks-on-rotating-shallow-water-Zeitlin/b2b294b16feaafecc4b17926d0128894c8153860)
 
-Zeitlin, V. (2013). Remarks on rotating shallow-water magnetohydrodynamics. Nonlinear Processes in Geophysics, 20, 893-898.
+For no influence of the magnetic field, set $`M=0`$. For no free-surface, set $`F=0`$ (length scales much smaller than the radius of deformation).
 
-
-For no influence of the coriolis force, set $`F=0`$. For no influence of the magnetic field, set $`M=0`$. 
-
-Equations are solved using a spectral method (FFTW) with a smooth filter and AB3 timestepping. 
-
+Perturbations are evolved on a doubly periodic rectangle using a spectral method (FFTW) with a smooth filter and AB3 timestepping.
