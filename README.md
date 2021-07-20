@@ -8,7 +8,7 @@ The current code solves the rotating, incompressible, shallow MHD equations form
 
    $`\partial _t A + {\bf u} \cdot {\bf \nabla} A  =  \frac{1}{R_m}\nabla^2A,`$
 
-where (for a velocity streamfunction $`\psi`$,)
+where (for a velocity streamfunction $`\psi`$, and magnetic streamfunction $`A`$)
 
    $`q  = \nabla^2 \psi - F^2 \psi, \quad {\bf u}  = \hat{z}\cdot\nabla\times \psi, \quad {\bf b}  = \hat{z}\cdot\nabla\times A.`$
   
