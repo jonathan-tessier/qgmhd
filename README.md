@@ -2,7 +2,7 @@
 
 This repository contains a variety of codes to study Magnetohydrodynamics. 
 
-The current code solves the rotating, incompressible, shallow MHD equations formulated for the potential vorticity $`q`$, and magnetic streamfunction $`A`$, by substracting a stationary background state $`(\bar q ,\bar A)`$ from the fields and evolving their doubly-periodic pertubations $`(q' ,A')`$, where $`q = \bar q + q'`$, $`A = \bar A + A'`$.
+The `NonlinearEvolution` code solves the rotating, incompressible, shallow MHD equations formulated for the potential vorticity $`q`$, and magnetic streamfunction $`A`$, by substracting a stationary background state $`(\bar q ,\bar A)`$ from the fields and evolving their doubly-periodic pertubations $`(q' ,A')`$, where $`q = \bar q + q'`$, $`A = \bar A + A'`$.
 
 The nonlinear equations read:
 
