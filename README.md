@@ -25,5 +25,5 @@ Zeitlin, V. (2013). Remarks on rotating shallow-water magnetohydrodynamics. Nonl
 
 For no influence of the coriolis force, set $`F=0`$. For no influence of the magnetic field, set $`M=0`$. 
 
-Equations are solved using a spectral method (FFTW) with a smooth filter. 
+Equations are solved using a spectral method (FFTW) with a smooth filter and AB3 timestepping. 
 
