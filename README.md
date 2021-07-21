@@ -22,7 +22,7 @@ where $`R_d=\sqrt{gh}/f_0,`$ and $`V=B_0/\sqrt{\mu\rho}`$ are the external Rossb
 
 For the original derivation or the dimensional equations, see: [Zeitlin, V. (2013). Remarks on rotating shallow-water magnetohydrodynamics.](https://www.semanticscholar.org/paper/Remarks-on-rotating-shallow-water-Zeitlin/b2b294b16feaafecc4b17926d0128894c8153860)
 
-For no influence of the magnetic field, set $`M=0`$. For no free-surface, set $`F=0`$ (length scales much smaller than the radius of deformation).
+For no magnetic field, set $`M=0`$. For no free-surface, set $`F=0`$ (length scales much smaller than the radius of deformation).
 
 Perturbations are evolved on a doubly periodic rectangle using a spectral method (FFTW) with a smooth filter and AB3 timestepping.
 
