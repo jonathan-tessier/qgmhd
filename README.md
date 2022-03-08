@@ -29,6 +29,6 @@ Perturbations are evolved on a doubly periodic rectangle using a spectral method
 
 Example plot: Vorticity snapshot of an unstable Bickley jet (without any magnetism) in the nonlinear regime. 
 
-<img src="Images/jet.png" alt="" width="500" height="500"/>
+<img src="Images/jet.png" alt="" width="400" height="400"/>
 
 <img src="Images/mhd-pv.mp4" alt="" width="500" height="500"/>
