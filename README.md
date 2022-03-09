@@ -37,4 +37,4 @@ Example Animation: Vorticity of 2D MHD turbulence
 
 `Shenfun` Installation: Please see the relevant instructions at [shenfun.readthedocs.io](https://shenfun.readthedocs.io/en/latest/installation.html)
 
-Other Requirements: `numpy`, `matplotlib`, `h5py`, `netCDF4`, `mpi4py`, `sys`, `os`, `time`,
+Other Requirements: `numpy`, `scipy`, `pyfftw`, `matplotlib`, `h5py`, `netCDF4`, `mpi4py`, `sys`, `subprocess`, `os`, `time`,
