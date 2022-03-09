@@ -38,3 +38,17 @@ Example Animation: Vorticity of 2D MHD turbulence
 `Shenfun` Installation: Please see the relevant instructions at [shenfun.readthedocs.io](https://shenfun.readthedocs.io/en/latest/installation.html)
 
 Other Requirements: `numpy`, `scipy`, `pyfftw`, `matplotlib`, `h5py`, `netCDF4`, `mpi4py`, `sys`, `subprocess`, `os`, `time`.
+
+*For `shenfun` install issues on Compute Canada clusters, try:
+```
+module load python/3.8.10
+module load mpi4py
+module load fftw-mpi/3.3.8
+virtualenv --no-download ENVgit
+source ENVgit/bin/activate
+pip install --no-index --upgrade pip
+pip install --no-index numpy scipy pyfftw cython pyyaml sympy mpi4py_fft numba
+git clone https://github.com/spectralDNS/shenfun.git
+cd shenfun
+python setup.py build install
+```
