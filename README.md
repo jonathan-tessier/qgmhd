@@ -2,7 +2,8 @@
 
 This repository contains a variety of codes to study Magnetohydrodynamics. 
 
-The `NonlinearEvolution` code solves the rotating, incompressible, quasi-geostrophic MHD equations formulated for the potential vorticity $`q`$, and magnetic streamfunction $`A`$, by substracting a stationary background state $`(\bar q ,\bar A)`$ from the fields and evolving their doubly-periodic pertubations $`(q' ,A')`$, where $`q = \bar q + q'`$, $`A = \bar A + A'`$.
+Both `SerialFFTW` and `ParallelShenfun` solve the rotating, incompressible, quasi-geostrophic MHD equations formulated for the potential vorticity $`q`$, and magnetic streamfunction $`A`$, by substracting a stationary background state $`(\bar q ,\bar A)`$ from the fields and evolving their doubly-periodic pertubations $`(q' ,A')`$, where $`q = \bar q + q'`$, $`A = \bar A + A'`$. 
+The `SerialFFTW` solves it in serial using [FFTW](https://www.fftw.org/) and `ParallelShenfun` does it in parallel using [Shenfun](https://shenfun.readthedocs.io/en/latest/index.html).
 
 The nonlinear equations read:
 
@@ -24,9 +25,7 @@ For the original derivation or the dimensional equations, see: [Zeitlin, V. (201
 
 For no magnetic field, set $`M=0`$. For no free-surface, set $`F=0`$ (length scales much smaller than the radius of deformation).
 
-Perturbations are evolved on a doubly periodic rectangle using a spectral method (FFTW) with a smooth filter and AB3 timestepping.
-
-
+Perturbations are evolved on a doubly periodic rectangle using a spectral method with a smooth filter and AB3 timestepping.
 
 Example plot: Vorticity snapshot of an unstable Bickley jet (without any magnetism) in the nonlinear regime. 
 
@@ -35,3 +34,7 @@ Example plot: Vorticity snapshot of an unstable Bickley jet (without any magneti
 Example Animation: Vorticity of 2D MHD turbulence
 
 <img src="Images/mhd-pv.mp4" alt="" width="500" height="500"/>
+
+`Shenfun` Installation: Please see the relevant instructions at [shenfun.readthedocs.io](https://shenfun.readthedocs.io/en/latest/installation.html)
+
+Other Requirements: `numpy`, `matplotlib`, `h5py`, `netCDF4`, `mpi4py`, `sys`, `os`, `time`,
