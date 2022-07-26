@@ -2,7 +2,7 @@
 
 This repository contains codes to study Quasi-Geostrophic Magnetohydrodynamics (QG-MHD). 
 
-`ParallelShenfun` solves the QG-MHD equations formulated for the potential vorticity $q$, and magnetic streamfunction $A$, by substracting a stationary background state $(\bar q ,\bar A)$ from the fields and evolving their doubly-periodic pertubations $(q' ,A')$, where $q = \bar q + q'$, $A = \bar A + A'$. 
+`ParallelShenfun` solves the nonlinear QG-MHD equations formulated for the potential vorticity $q$, and magnetic streamfunction $A$, by substracting a stationary background state $(\bar q ,\bar A)$ from the fields and evolving their doubly-periodic pertubations $(q' ,A')$, where $q = \bar q + q'$, $A = \bar A + A'$. 
 The code is written in Python and runs in parallel using [Shenfun](https://shenfun.readthedocs.io/en/latest/index.html).
 
 The nonlinear equations read:
@@ -34,6 +34,8 @@ Example: Vorticity snapshot of an unstable Bickley jet (without any magnetism).
 Example: Vorticity snapshot of decaying 2D-MHD turbulence
 
 <img src="Images/mhd-pv.png" alt="" width="400" height="400"/>
+
+`LinearStability` solves the linear stability of parallel shear flows like a Bickley jet. Linearizing the QG-MHD equations about a background state in geostrophic balance and assuming a normal mode decomposition on the perturbations, we can generate an eigenvalue problem where the eigenvalue determines the growth rate and the phase speed of the unstable mode, and the eigenfunction shows the spatial structure in the y-direction.
 
 `Shenfun` Installation: Please see the relevant instructions at [shenfun.readthedocs.io](https://shenfun.readthedocs.io/en/latest/installation.html)
 
