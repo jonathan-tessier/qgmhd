@@ -27,7 +27,7 @@ For no magnetic field, set $M=0$. For no free-surface, set $F=0$.
 
 Perturbations are evolved on a doubly periodic rectangle using a pseudo-spectral method with a smooth filter and AB3 timestepping.
 
-Example: Vorticity snapshot of an unstable Bickley jet (without any magnetism) in the nonlinear regime. 
+Example: Vorticity snapshot of an unstable Bickley jet (without any magnetism).
 
 <img src="Images/jet.png" alt="" width="400" height="400"/>
 
