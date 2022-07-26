@@ -25,7 +25,7 @@ rank = comm.Get_rank()
 N = [1024]*2
 
 # options to make the movie
-movie = True #False
+movie = False #False
 movie_name = 'qgmhd_movie.mp4'
 
 # plot full field 

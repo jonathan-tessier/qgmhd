@@ -7,10 +7,7 @@
 # - The output fields and diagnostics are viewable via the read_fields.py and 
 #   read_diagnostics.py scripts. For more advanced plotting, see /AdditionalDiagnostics.
 # - When running in parallel, use the command $ mpiexec -np X python3 qgmhd_shenfun.py
-#   and run generate_diagnostics.py (from /AdditionalDiagnostics) in the current directory.
-#   This combines the diagnostics from each core into a single set of diagnostics for the 
-#   entire simulation. (to be fixed..)
-# - When running on graham (ComputeCanada) or other clusters with SLURM, you should use 
+# - When running on graham (Compute Canada) or other clusters with SLURM, you should use 
 #   $ srun  instead of $ mpiexec -np X  for optimal ressource efficiency.
 # - At 1024^2 points with dt = 5e-4, tf = 300, tplot = 2, an 8 core parallel simulation takes ~18hrs on graham.
  
@@ -31,7 +28,7 @@ size = comm.Get_size()
 
 # Specific library imports
 from library.operators     import jet_bickley
-from library.qg_physics    import physical_parameters
+from library.qg_physics    import physical_parameters, compute_ICs_from_qA
 from library.time_stepping import temporal_parameters, solve_model
 from library.grid          import grid_parameters, generate_field_with_kpeak, generate_broad_spectrum_field
 from library.initialize    import init_solution, Build_FunctionSpaces, scatter_ICs, scatter_forcing
@@ -49,18 +46,18 @@ def main():
 
     # Initialize the Physical Parameters
     phys  = physical_parameters(MHD = True,  # Turns on MHD, Off for pure hydrodynamic flow
-                                 F2 = 0.0,   # Inverse Burger Number L^2/R_d^2
+                                 F2 = 0,     # Inverse Burger Number L^2/R_d^2
                                  M2 = 1e-4,  # square ratio of Alfven Wave speed to flow velocity
                                  Uj = 0,     # Amplitude of the background Bickley jet
                                  B0 = 1,     # Switch (0,1) to turn on the background mag field
                                  Rm = 1e4,   # Magnetic Reynolds number (Magnetic diffusion)
                                  Re = 1e4,   # Reynolds number (viscosity)
-                            psi_amp = 1,     # Amplitude of the psi perturbation
-                              A_amp = 0.01,  # Amplitude of the A perturbation
-                           psikstar = 0.5,   # Central wavenumber of the psi pert.
-                             Akstar = 0.5,   # Central wavenumber of the A pert.
-                            psi_sig = 2,     # Spectral width of the psi pert.
-                              A_sig = 2,     # Spectral width of the A pert.
+                            psi_amp = 0.2,   # Amplitude of the psi perturbation
+                              A_amp = 0.2,   # Amplitude of the A perturbation
+                           psikstar = 0,     # Central wavenumber of the psi pert.
+                             Akstar = 0,     # Central wavenumber of the A pert.
+                            psi_sig = 1,     # Spectral width of the psi pert.
+                              A_sig = 1,     # Spectral width of the A pert.
                             psi_nps = 9,     # Numpy seed for random generator psi
                               A_nps = 11,    # Numpy seed for random generator A
                             flux_qg = True,  # Turns on the PV equation, Off for pure induction
@@ -75,19 +72,19 @@ def main():
                             FA_sig  = 1,     # spectral width of A forcing
                             Fq_nps  = 0,     # Numpy seed for PV forcing
                             FA_nps  = 1,     # Numpy seed of A forcing
-                            Fqkstar = 5,     # Central wavenumber for q forcing spectrum
+                            Fqkstar = 3,     # Central wavenumber for q forcing spectrum
                             FAkstar = 3)     # Central wavenumber for A forcing spectrum
 
     # sets timestepping parameters (tf,dt,tplot) = (final time, timestep, plotting frequency)
     # setting onthefly = True makes the code plot q and A as it computes it (use for testing)
-    times = temporal_parameters(tf = 300.0, dt = 5e-4, tplot = 2.0, onthefly = False)
+    times = temporal_parameters(tf = 150, dt =2.5e-4, tplot = 1, onthefly = False)
 
     # initializes the grid
     grid  = grid_parameters(phys, T, Nx = N[0], Ny = N[1], Lx = L[0], Ly = L[1])
 
     # initializes the solution structures (pertubation and background)
     soln, soln_bar = init_solution(grid, T, TV, VM), init_solution(grid, T, TV, VM)
- 
+    
     # initializes the output directory and parameters
     folder = 'output-qgmhd' # Data storage folder name
     file0, diagvals = initialize_output(phys, times, grid, folder) 
@@ -107,10 +104,13 @@ def main():
     # - single_vortex: Smaller vortex, a quarter the domain size, centered at (Lx/2,Ly/2)
     # - quad_vortex: An infinite tile of vortices, half the domain size
     # - row_vortex: A single row of vortices, a quarter the domain size, centered at (y = Ly/2)
-    soln.qA[0], soln.qA[1] = scatter_ICs(T0, grid, phys, comm, rank, size, ICtype = 'broad_random')
+    soln.qA[0], soln.psi[:], soln.j[:], soln.qA[1] = scatter_ICs(T0, grid, phys, comm, rank, size, ICtype = 'broad_random')
+    
+    # Plot the initial fields if needed
+    plot_field(soln,0)
+    sys.exit()
 
     # Uncomment to add arbitrary forcing to the equations, currently set-up for forcing at a particular scale
-
     #soln.FqA[0], soln.FqA[1] = scatter_forcing(T0, grid, phys, comm, rank, size)
 
     # Create the first instances of the transformed variables

@@ -3,7 +3,7 @@
 # post-processing script to plot the spectral transfers
 # from the output of the qgmhd_shenfun.py driver script.
 #
-# Current outputs: -\int T(k) dk, viscous and full equation
+# Current outputs: T(k), viscous and full equation
 #
 # Options to make a movie or just animate
 
@@ -47,7 +47,7 @@ movie = True
 movie_name = 'qgmhd_transfers.mp4'
 
 # time bounds for temporal averaging
-[t_begin,t_end] = [100,300] 
+[t_begin,t_end] = [100,150] 
 
 folder           = 'output-qgmhd/'
 file_name = folder + "qgmhd_Nx{}_diagnostics.h5".format(N[0])
@@ -97,31 +97,37 @@ print('      nplot = ', ntplot)
 
 # Read files
 V1  = FunctionSpace(N[0], 'F', dtype='D', domain=(0, L[0]))
-V2  = FunctionSpace(N[1], 'F', dtype='d', domain=(0, L[1]))
+V2  = FunctionSpace(N[1], 'F', dtype='D', domain=(0, L[1]))
 T   = TensorProductSpace(MPI.COMM_SELF, (V1, V2), **{'planner_effort': 'FFTW_MEASURE'})
 TV  = VectorSpace(T)
 
 X  = T.local_mesh(True)
+K = np.array(T.local_wavenumbers(True,True))
+KP = np.fft.fftshift(K)
+
+kx = K[0][:,0]
+ky = K[1][0,:]
 
 # maximum wavenumbers
 nxh = int(N[0]/2)
 nyh = int(N[1]/2)    
 
-kx = np.fft.fftfreq(N[0], d=L[0]/(2.*np.pi))*N[0]
-ky = np.fft.fftfreq(N[1], d=L[1]/(2.*np.pi))*N[1]
+#kx = np.fft.fftfreq(N[0], d=L[0]/(2.*np.pi))*N[0]
+#ky = np.fft.fftfreq(N[1], d=L[1]/(2.*np.pi))*N[1]
 kxp = np.fft.fftshift(kx)
 kyp = np.fft.fftshift(ky)
 
 # Compute a radial coordiante
 [kxx, kyy] = np.meshgrid(kx,ky)
 [kxxp,kyyp]= np.meshgrid(kxp,kyp)
-K          = np.sqrt(kxx**2 + kyy**2)
-KP         = np.sqrt(kxxp**2 + kyyp**2)
+R          = np.sqrt(kxx**2 + kyy**2)
+RP         = np.sqrt(kxxp**2 + kyyp**2)
 
 np.seterr(divide='ignore')
-iK     = np.zeros((2,N[1],N[0]), dtype=complex)
-iK[0]  = 1j*kxx
-iK[1]  = 1j*kyy
+iK = 1j*K
+#iK     = np.zeros((2,N[1],N[0]), dtype=complex)
+#iK[0]  = 1j*kxx
+#iK[1]  = 1j*kyy
 
 if F2 == 0:
     print("F is zero")
@@ -131,7 +137,7 @@ else:
     print("F is non-zero")
 
 # Azimuthal avg
-dbin = 1.0
+dbin = 1
 kbin = 2.*np.pi/L[0]*np.arange(0., nxh+1, dbin)
 
 HEadv_vec = np.zeros([len(tplot),len(kbin)])
@@ -139,51 +145,41 @@ HElor_vec = np.zeros([len(tplot),len(kbin)])
 HEvis_vec = np.zeros([len(tplot),len(kbin)])
 MEadv_vec = np.zeros([len(tplot),len(kbin)])
 MEvis_vec = np.zeros([len(tplot),len(kbin)])
-HEtot_vec = np.zeros([len(tplot),len(kbin)])
-MEtot_vec = np.zeros([len(tplot),len(kbin)])
+TEtot_vec = np.zeros([len(tplot),len(kbin)])
 
 ## Plotting Initialization
 
 plt.ion()
-fig, ax = plt.subplots(nrows=1,ncols=3,figsize=(15,5))
+fig, ax = plt.subplots(nrows=1,ncols=2,figsize=(10,5))
 fig.subplots_adjust(wspace=0.4, bottom=0.15)
 
-p1, = ax[0].plot(kbin[1:], HEadv_vec[0,1:], '-r', label=r'$ T_{q}(k) $')
-p3, = ax[0].plot(kbin[1:], HElor_vec[0,1:], '--r', label=r'$ T_{L}(k)$')
+p1, = ax[0].plot(kbin[1:], HEadv_vec[0,1:], '-r', label=r'$T_{q}(k)$')
+p2, = ax[0].plot(kbin[1:], HElor_vec[0,1:], '-b', label=r'$T_{L}(k)$')
+p3, = ax[0].plot(kbin[1:], MEadv_vec[0,1:], '-g', label=r'$T_{A}(k)$')
+p4, = ax[0].plot(kbin[1:], TEtot_vec[0,1:], '-k', label=r'$T(k)$')
 
-twin1 = ax[0].twinx()
-p4, = twin1.plot(kbin[1:], MEadv_vec[0,1:], '--b', label=r'$ T_{A}(k) $')
-
-twin2 = ax[1].twinx() 
-p2, = ax[1].plot(kbin[1:], HEvis_vec[0,1:], '-r', label=r'$-2R_e^{-1} k^2\hat E_H$')
-p5, = twin2.plot(kbin[1:], MEvis_vec[0,1:], '-b', label=r'$-2R_m^{-1} k^2\hat E_M$')
-
-twin3 = ax[2].twinx() 
-p6, = ax[2].plot(kbin[1:], HEtot_vec[0,1:], '-r', label=r'$T_q + T_L -2R_e^{-1}k^2\hat E_H $')
-p7, = twin3.plot(kbin[1:], MEtot_vec[0,1:], '-b', label=r'$T_A -2R_m^{-1}k^2\hat E_M$')
+twin1 = ax[1].twinx() 
+p5, = ax[1].plot(kbin[1:], HEvis_vec[0,1:], '-r', label=r'$2R_e^{-1}k^2\hat E_H$')
+p6, = twin1.plot(kbin[1:], MEvis_vec[0,1:], '-b', label=r'$2R_m^{-1}k^2\hat E_M$')
     
-ax[0].set_xscale('log')
+#ax[0].set_xscale('log')
 ax[0].set_xlabel("wavenumber (k)")
 ax[0].grid(True)
 ax[0].tick_params(axis='x')
-ax[0].legend(handles=[p1, p3, p4],loc='upper left')
+ax[0].legend(handles=[p1, p2, p3, p4],loc='upper left')
 
-ax[1].set_xscale('log')
+#ax[1].set_xscale('log')
 ax[1].set_xlabel("wavenumber (k)")
 ax[1].grid(True)
 ax[1].tick_params(axis='x')
-ax[1].legend(handles=[p2, p5],loc='upper left')
+ax[1].legend(handles=[p5, p6],loc='upper left')
 ax[1].set_xlabel("wavenumber (k)")
 
-ax[2].set_xscale('log')
-ax[2].set_xlabel("wavenumber (k)")
-ax[2].grid(True)
-ax[2].tick_params(axis='x')
-ax[2].legend(handles=[p6, p7],loc='upper left')
-ax[2].set_xlabel("wavenumber (k)")
+ax[0].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+ax[1].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+twin1.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
 
-for [axes,plots] in [[ax[0],p1],[twin1,p4],[ax[1],p2],[twin2,p5],[ax[2],p6],[twin3,p7]]:
-    axes.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+for [axes,plots] in [[ax[1],p5],[twin1,p6]]:
     axes.tick_params(axis='y', colors=plots.get_color())
 
 #constants for flux computations
@@ -201,7 +197,6 @@ for ii in np.arange(0, Nt):
     bpert = np.array(f['b/2D/' + str(ii)][()])
     p = np.array(f['psi/2D/' + str(ii)][()])
 
-    # velocity is always full field..
     u = upert + np.array(f['u_bar/2D/' + str(0)][()])
     b = bpert + np.array(f['b_bar/2D/' + str(0)][()])
 
@@ -226,28 +221,47 @@ for ii in np.arange(0, Nt):
     HE_viscous = -2*K2oK2F2/Lo2p2*(q_hat*np.conjugate(q_hat)/Re).real
     ME_advect  = +M2*Lo2p2*(j_hat*np.conjugate(fftn(inner(u,gradA)-B0*upert[1]))).real
     ME_viscous = -M2*2/Lo2p2*(j_hat*np.conjugate(j_hat)/Rm).real
-    HE_total   = HE_advect + HE_lorentz + HE_viscous
-    ME_total   = ME_advect + ME_viscous
+    TE_total   = HE_advect + HE_lorentz + ME_advect
+
+    print("2D sum = ", np.sum(HE_advect))
 
     HE_advect_bin  =  np.zeros(kbin.shape)
     HE_lorentz_bin =  np.zeros(kbin.shape)
     HE_viscous_bin =  np.zeros(kbin.shape) 
     ME_advect_bin  =  np.zeros(kbin.shape)
     ME_viscous_bin =  np.zeros(kbin.shape)
-    HE_total_bin   =  np.zeros(kbin.shape)
-    ME_total_bin   =  np.zeros(kbin.shape)
+    TE_total_bin   =  np.zeros(kbin.shape)
 
     for jj in range(0, len(kbin)-1):
-        mask = np.logical_and(KP >= kbin[jj], KP < kbin[jj+1]).astype(int)
-        theta_int = 2*np.pi*kbin[jj]
+        mask = np.logical_and(RP >= kbin[jj], RP < kbin[jj+1]).astype(int)
+        #theta_int = 2*np.pi*kbin[jj]
         #theta_int = np.pi*(kbin[jj+1]**2-kbin[jj]**2)
-        HE_advect_bin[jj] = ndimage.mean(np.fft.fftshift(HE_advect).real, mask)*theta_int
-        HE_lorentz_bin[jj] = ndimage.mean(np.fft.fftshift(HE_lorentz).real, mask)*theta_int
-        HE_viscous_bin[jj] = ndimage.mean(np.fft.fftshift(HE_viscous).real, mask)*theta_int
-        ME_advect_bin[jj] = ndimage.mean(np.fft.fftshift(ME_advect).real, mask)*theta_int
-        ME_viscous_bin[jj] = ndimage.mean(np.fft.fftshift(ME_viscous).real, mask)*theta_int
-        HE_total_bin[jj] = ndimage.mean(np.fft.fftshift(HE_total).real, mask)*theta_int
-        ME_total_bin[jj] = ndimage.mean(np.fft.fftshift(ME_total).real, mask)*theta_int
+        theta_int = dbin
+        HE_advect_bin[jj] = ndimage.sum(np.fft.fftshift(HE_advect).real, mask)*theta_int
+        HE_lorentz_bin[jj] = ndimage.sum(np.fft.fftshift(HE_lorentz).real, mask)*theta_int
+        HE_viscous_bin[jj] = ndimage.sum(np.fft.fftshift(HE_viscous).real, mask)*theta_int
+        ME_advect_bin[jj] = ndimage.sum(np.fft.fftshift(ME_advect).real, mask)*theta_int
+        ME_viscous_bin[jj] = ndimage.sum(np.fft.fftshift(ME_viscous).real, mask)*theta_int
+        TE_total_bin[jj] = ndimage.sum(np.fft.fftshift(TE_total).real, mask)*theta_int
+
+    #HE_advect_bin  =  -np.cumsum(HE_advect_bin)
+    
+    #print("1D sum = ",-HE_advect_bin[-1])
+    #print("Differ = ",np.sum(HE_advect)+HE_advect_bin[-1])
+
+    #HE_lorentz_bin  =  -np.cumsum(HE_lorentz_bin)
+    #HE_viscous_bin  =  -np.cumsum(HE_viscous_bin)
+    #ME_advect_bin  =  -np.cumsum(ME_advect_bin)
+    #ME_viscous_bin  =  -np.cumsum(ME_viscous_bin)
+    #TE_total_bin   = -np.cumsum(TE_total_bin)
+
+    # for Pi(k) instead of T(k): computes -\int_0^k T(k)
+    #HE_advect_bin  = -integrate.cumtrapz(HE_advect_bin, kbin, initial=0)
+    #HE_lorentz_bin = -integrate.cumtrapz(HE_lorentz_bin, kbin, initial=0)
+    #HE_viscous_bin = -integrate.cumtrapz(HE_viscous_bin, kbin, initial=0)
+    #ME_advect_bin  = -integrate.cumtrapz(ME_advect_bin, kbin, initial=0)
+    #ME_viscous_bin = -integrate.cumtrapz(ME_viscous_bin, kbin, initial=0)
+    #TE_total_bin   = -integrate.cumtrapz(TE_total_bin, kbin, initial=0)
 
     # store for temporal averaging
     HEadv_vec[ii,:] = HE_advect_bin 
@@ -255,31 +269,25 @@ for ii in np.arange(0, Nt):
     MEadv_vec[ii,:] = ME_advect_bin
     HEvis_vec[ii,:] = HE_viscous_bin
     MEvis_vec[ii,:] = ME_viscous_bin
-    HEtot_vec[ii,:] = HE_total_bin
-    MEtot_vec[ii,:] = ME_total_bin
+    TEtot_vec[ii,:] = TE_total_bin
 
-    # Update plot
-    pltmax1 = max(np.max(abs(HE_advect_bin)),np.max(abs(HE_lorentz_bin)))
+    pltmax1 = max(np.max(abs(HE_advect_bin)),np.max(abs(HE_lorentz_bin)),np.max(abs(ME_advect_bin)),np.max(abs(TE_total_bin)))
+
+    ax[0].set_ylim(-pltmax1,pltmax1)
+
+    ax[1].set_ylim(-np.max(abs(HE_viscous_bin)),np.max(abs(HE_viscous_bin)))
+    twin1.set_ylim(-np.max(abs(ME_viscous_bin)),np.max(abs(ME_viscous_bin)))
 
     p1.set_ydata(HE_advect_bin[1:])
-    p3.set_ydata(HE_lorentz_bin[1:])
-    p4.set_ydata(ME_advect_bin[1:])
-    ax[0].set_ylim(-pltmax1,pltmax1)
-    twin1.set_ylim(-np.max(abs(ME_advect_bin)),np.max(abs(ME_advect_bin)))
+    p2.set_ydata(HE_lorentz_bin[1:])
+    p3.set_ydata(ME_advect_bin[1:])
+    p4.set_ydata(TE_total_bin[1:])
 
-    p2.set_ydata(HE_viscous_bin[1:])
-    p5.set_ydata(ME_viscous_bin[1:]) 
-    ax[1].set_ylim(-np.max(abs(HE_viscous_bin)),np.max(abs(HE_viscous_bin)))
-    twin2.set_ylim(-np.max(abs(ME_viscous_bin)),np.max(abs(ME_viscous_bin)))
-
-    p6.set_ydata(HE_total_bin[1:])
-    p7.set_ydata(ME_total_bin[1:])
-    ax[2].set_ylim(-np.max(abs(HE_total_bin)),np.max(abs(HE_total_bin)))
-    twin3.set_ylim(-np.max(abs(ME_total_bin)),np.max(abs(ME_total_bin)))
+    p5.set_ydata(HE_viscous_bin[1:])
+    p6.set_ydata(ME_viscous_bin[1:]) 
 
     ax[0].set_title('Component Transfers at t = %2.0f' % t)
     ax[1].set_title('Viscous Transfers at t = %2.0f' % t)
-    ax[2].set_title('HE and ME Transfers at t = %2.0f' % t)
 
     fig.canvas.draw()
 
@@ -303,63 +311,48 @@ MEvis = np.mean(MEvis_vec[first:last,:],axis=0)
 HEadv = np.mean(HEadv_vec[first:last,:],axis=0)
 HElor = np.mean(HElor_vec[first:last,:],axis=0)
 MEadv = np.mean(MEadv_vec[first:last,:],axis=0)
-HEtot = np.mean(HEtot_vec[first:last,:],axis=0)
-MEtot = np.mean(MEtot_vec[first:last,:],axis=0)
+TEtot = np.mean(TEtot_vec[first:last,:],axis=0)
 
-fig, ax = plt.subplots(nrows=1,ncols=3,figsize=(15,5))
+fig, ax = plt.subplots(nrows=1,ncols=2,figsize=(10,5))
 fig.subplots_adjust(wspace=0.4, bottom=0.15)
 
-p1, = ax[0].plot(kbin[1:], HEadv[1:], '-r', label=r'$ T_{q}(k) $')
-p3, = ax[0].plot(kbin[1:], HElor[1:], '--r', label=r'$ T_{L}(k) $')
+p1, = ax[0].plot(kbin[1:], HEadv[1:], '-r', label=r'$T_{q}(k)$')
+p2, = ax[0].plot(kbin[1:], HElor[1:], '-b', label=r'$T_{L}(k)$')
+p3, = ax[0].plot(kbin[1:], MEadv[1:], '-g', label=r'$T_{A}(k)$')
+p4, = ax[0].plot(kbin[1:], TEtot[1:], '-k', label=r'$T(k)$')
 
-twin1 = ax[0].twinx()
-p4, = twin1.plot(kbin[1:], MEadv[1:], '--b', label=r'$ T_{A}(k) $')
-
-twin2 = ax[1].twinx() 
-p2, = ax[1].plot(kbin[1:], HEvis[1:], '-r', label=r'$-2R_e^{-1} k^2\hat E_H$')
-p5, = twin2.plot(kbin[1:], MEvis[1:], '-b', label=r'$-2R_m^{-1} k^2\hat E_M$')
-
-twin3 = ax[2].twinx() 
-p6, = ax[2].plot(kbin[1:], HEtot[1:], '-r', label=r'$T_q + T_L -2R_e^{-1}k^2\hat E_H  $')
-p7, = twin3.plot(kbin[1:], MEtot[1:], '-b', label=r'$T_A - 2R_m^{-1}k^2\hat E_M$')
+twin1 = ax[1].twinx() 
+p5, = ax[1].plot(kbin[1:], HEvis[1:], '-r', label=r'$2R_e^{-1}k^2\hat E_H$')
+p6, = twin1.plot(kbin[1:], MEvis[1:], '-b', label=r'$2R_m^{-1}k^2\hat E_M$')
     
-ax[0].set_xscale('log')
+#ax[0].set_xscale('log')
 ax[0].set_xlabel("wavenumber (k)")
 ax[0].grid(True)
 ax[0].tick_params(axis='x')
-ax[0].legend(handles=[p1, p3, p4],loc='upper left')
+ax[0].legend(handles=[p1, p2, p3, p4],loc='upper left')
 ax[0].set_title('Avg Component Transfers')
 
-ax[1].set_xscale('log')
+#ax[1].set_xscale('log')
 ax[1].set_xlabel("wavenumber (k)")
 ax[1].grid(True)
 ax[1].tick_params(axis='x')
-ax[1].legend(handles=[p2, p5],loc='upper left')
+ax[1].legend(handles=[p5, p6],loc='upper left')
 ax[1].set_xlabel("wavenumber (k)")
 ax[1].set_title('Avg Viscous Transfers')
 
-ax[2].set_xscale('log')
-ax[2].set_xlabel("wavenumber (k)")
-ax[2].grid(True)
-ax[2].tick_params(axis='x')
-ax[2].legend(handles=[p6, p7],loc='upper left')
-ax[2].set_xlabel("wavenumber (k)")
-ax[2].set_title('Avg HE and ME Transfers')
+ax[0].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+ax[1].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+twin1.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
 
-for [axes,plots] in [[ax[0],p1],[twin1,p4],[ax[1],p2],[twin2,p5],[ax[2],p6],[twin3,p7]]:
-    axes.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+for [axes,plots] in [[ax[1],p5],[twin1,p6]]:
     axes.tick_params(axis='y', colors=plots.get_color())
 
-pltmax1 = max(np.max(abs(HEadv)),np.max(abs(HElor)))
+pltmax1 = max(np.max(abs(HEadv)),np.max(abs(HElor)),np.max(abs(MEadv)),np.max(abs(TEtot)))
 
 ax[0].set_ylim(-pltmax1,pltmax1)
-twin1.set_ylim(-np.max(abs(MEadv)),np.max(abs(MEadv)))
 
 ax[1].set_ylim(-np.max(abs(HEvis)),np.max(abs(HEvis)))
-twin2.set_ylim(-np.max(abs(MEvis)),np.max(abs(MEvis)))
-
-ax[2].set_ylim(-np.max(abs(HEtot)),np.max(abs(HEtot)))
-twin3.set_ylim(-np.max(abs(MEtot)),np.max(abs(MEtot)))
+twin1.set_ylim(-np.max(abs(MEvis)),np.max(abs(MEvis)))
 
 fig.canvas.draw()
 

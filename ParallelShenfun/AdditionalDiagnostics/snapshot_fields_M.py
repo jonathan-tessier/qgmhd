@@ -14,10 +14,9 @@
 # figure. Further, list the values of magnetism to include,
 # so the suffixes to your directory names, in mag_values.
 # The code will extract the actual value of M from each output.
-
+#
 # This scripts further requires a symbolic link of the code library.
 # from this directory, run $ ln -s /path/to/library
-# NOTE: Should avoid needing lib if all we're taking is an inner defn...
 #
 # As long as nrows*ncols = len(mag_values), you can pick whatever
 # configuration of rows and columns you want the panels arranged in.
@@ -34,7 +33,6 @@ import matplotlib.pyplot as plt
 import sys
 from shenfun import *
 from library.operators import inner, cross
-from library.data_output import fmt
 # creating figures for multiple values of M^2 and t.
 
 # set resolution to pick out correct files
@@ -49,8 +47,14 @@ case_prefix = "turbB0-F2-0"
 # turns the colorbars on/off
 cb = False
 
+# rastersize?
+rast = False
+
+# dpi
+dpi = 300
+
 # selects the times to plot
-time_values = [20,50,100,150]
+time_values = [20,100,200,300]
 
 # selects the magnetic cases to plot
 #mag_values = ["hydro","1em6","1em5","1em4","1em3","1em2","1em1","1em0"]
@@ -60,6 +64,23 @@ mag_values = ["hydro","1em6","1em4","1em2"]
 ncols,  nrows  = [int(len(time_values)), int(len(mag_values))];
 hscale, vscale = [2.0,2.0];
 figsize=((hscale+cb*0.5)*ncols, (vscale+0.05)*nrows)
+
+# fig format (eps,png,both)
+save_format = "tiff"
+
+# function for tenth power formatting for M2 variable
+def fmt(x):
+    a, b = '{:.0e}'.format(x).split('e')
+    b = int(b)
+    if float(a) == 0: 
+        return "0"
+    elif float(a) == 1:
+        if b == 0:
+            return "1"
+        else:
+            return r'$10^{{{}}}$'.format(b)
+    else:
+        return r'${} \times 10^{{{}}}$'.format(a, b)
 
 diagfilename_array = []
 fieldfilename_array = []
@@ -129,16 +150,16 @@ X  = T.local_mesh(True)
 K   = T.local_wavenumbers(True,True)
 
 fig_q, axesq = plt.subplots(nrows=nrows, ncols=ncols, sharey=True, sharex=True, figsize=figsize)
-fig_q.suptitle('Potential Vorticity (q)')
+fig_q.suptitle(r'Potential Vorticity ($q$)')
 
 fig_j, axesj = plt.subplots(nrows=nrows, ncols=ncols, sharey=True, sharex=True, figsize=figsize)
-fig_j.suptitle('Scaled Current (Mj)')
+fig_j.suptitle(r'Current ($j$)')
 
 fig_p, axesp = plt.subplots(nrows=nrows, ncols=ncols, sharey=True, sharex=True, figsize=figsize)
 fig_p.suptitle(r'Streamfunction ($\psi$)')
 
 fig_A, axesA = plt.subplots(nrows=nrows, ncols=ncols, sharey=True, sharex=True, figsize=figsize)
-fig_A.suptitle('Scaled Magnetic Streamfunction (MA)')
+fig_A.suptitle(r'Magnetic Streamfunction ($A$)')
 
 fig_L, axesL = plt.subplots(nrows=nrows, ncols=ncols, sharey=True, sharex=True, figsize=figsize)
 fig_L.suptitle(r'Lorentz Force ($M^2 b\cdot\nabla j$)')
@@ -179,8 +200,8 @@ for mindex in range(len(mag_values)):
             gradj[i][:] = T.backward(1j*K[i]*T.forward(j))
 
         for axes in [axesq,axesj,axesp,axesA,axesL]:
-            if mindex == 0: axes[mindex,tindex].set_title("t = {}".format(time_values[tindex]));
-            if tindex == 0: axes[mindex,tindex].set_ylabel(r"$M^2 = $"+fmt(M2_vector[mindex]));
+            if mindex == 0: axes[mindex,tindex].set_title(r"$t = {}$".format(time_values[tindex]));
+            if tindex == 0: axes[mindex,tindex].set_ylabel(r"$M = $"+fmt(np.sqrt(M2_vector[mindex])));
             for mi in range(len(mag_values)):
                 for ti in range(len(time_values)):
                     #if not(cb): axes[mi,ti].set_aspect('equal');
@@ -190,41 +211,54 @@ for mindex in range(len(mag_values)):
         vmin = -np.max(abs(q));
         vmax = np.max(abs(q));
         aq = axesq[mindex,tindex].pcolormesh(X[0], X[1], q, cmap = 'seismic', shading = 'gouraud', \
-             vmin = vmin, vmax = vmax)
+             vmin = vmin, vmax = vmax, rasterized=rast)
         if cb: fig_q.colorbar(aq, ax=axesq[mindex,tindex]);
 
         vmin = -np.max(abs(np.sqrt(M2)*j));
         vmax = np.max(abs(np.sqrt(M2)*j));
         aj = axesj[mindex,tindex].pcolormesh(X[0], X[1], np.sqrt(M2)*j, cmap = 'seismic', shading = 'gouraud', \
-             vmin = vmin, vmax = vmax)
+             vmin = vmin, vmax = vmax, rasterized=rast)
         if cb: fig_j.colorbar(aj, ax=axesj[mindex,tindex]);
 
         vmin = -np.max(abs(p));
         vmax = np.max(abs(p));
         ap = axesp[mindex,tindex].pcolormesh(X[0], X[1], p, cmap = 'seismic', shading = 'gouraud', \
-             vmin = vmin, vmax = vmax)
+             vmin = vmin, vmax = vmax, rasterized=rast)
         if cb: fig_p.colorbar(ap, ax=axesp[mindex,tindex]);
 
         vmin = -np.max(abs(np.sqrt(M2)*A));
         vmax = np.max(abs(np.sqrt(M2)*A));
         aA = axesA[mindex,tindex].pcolormesh(X[0], X[1], np.sqrt(M2)*A, cmap = 'seismic', shading = 'gouraud', \
-             vmin = vmin, vmax = vmax)
+             vmin = vmin, vmax = vmax, rasterized=rast)
         if cb: fig_A.colorbar(aA, ax=axesA[mindex,tindex]);
 
         vmin = -np.max(abs(M2*inner(b_total,gradj)));
         vmax = np.max(abs(M2*inner(b_total,gradj)));
         aL = axesL[mindex,tindex].pcolormesh(X[0], X[1], M2*inner(b_total,gradj), cmap = 'seismic', shading = 'gouraud', \
-             vmin = vmin, vmax = vmax)
+             vmin = vmin, vmax = vmax, rasterized=rast)
         if cb: fig_L.colorbar(aL, ax=axesL[mindex,tindex]);
 
 for fig in [fig_q,fig_j,fig_p,fig_A,fig_L]: 
     fig.tight_layout()
     if  not(cb): fig.subplots_adjust(hspace = 0.0, wspace=0.0);
 
-fig_q.savefig("qgmhd_q_M_snaps_N{}.png".format(N[0]))
-fig_j.savefig("qgmhd_j_M_snaps_N{}.png".format(N[0]))
-fig_p.savefig("qgmhd_p_M_snaps_N{}.png".format(N[0]))
-fig_A.savefig("qgmhd_A_M_snaps_N{}.png".format(N[0]))
-fig_L.savefig("qgmhd_L_M_snaps_N{}.png".format(N[0]))
+if save_format == 'png' or save_format == 'both':
+    fig_q.savefig("qgmhd_q_M_snaps_N{}.png".format(N[0]))
+    fig_j.savefig("qgmhd_j_M_snaps_N{}.png".format(N[0]))
+    fig_p.savefig("qgmhd_p_M_snaps_N{}.png".format(N[0]))
+    fig_A.savefig("qgmhd_A_M_snaps_N{}.png".format(N[0]))
+    fig_L.savefig("qgmhd_L_M_snaps_N{}.png".format(N[0]))
+if save_format == 'eps' or save_format == 'both':
+    fig_q.savefig("qgmhd_q_M_snaps_N{}.eps".format(N[0]))
+    fig_j.savefig("qgmhd_j_M_snaps_N{}.eps".format(N[0]))
+    fig_p.savefig("qgmhd_p_M_snaps_N{}.eps".format(N[0]))
+    fig_A.savefig("qgmhd_A_M_snaps_N{}.eps".format(N[0]))
+    fig_L.savefig("qgmhd_L_M_snaps_N{}.eps".format(N[0]))
+if save_format == 'tiff' or save_format == 'both':
+    fig_q.savefig("qgmhd_q_M_snaps_N{}.tiff".format(N[0]),dpi=dpi)
+    fig_j.savefig("qgmhd_j_M_snaps_N{}.tiff".format(N[0]),dpi=dpi)
+    fig_p.savefig("qgmhd_p_M_snaps_N{}.tiff".format(N[0]),dpi=dpi)
+    fig_A.savefig("qgmhd_A_M_snaps_N{}.tiff".format(N[0]),dpi=dpi)
+    fig_L.savefig("qgmhd_L_M_snaps_N{}.tiff".format(N[0]),dpi=dpi)
 
 

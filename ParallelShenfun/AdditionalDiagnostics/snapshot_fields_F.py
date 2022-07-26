@@ -14,10 +14,9 @@
 # figure. Further, list the values of magnetism to include,
 # so the suffixes to your directory names, in mag_values.
 # The code will extract the actual value of M from each output.
-
+#
 # This scripts further requires a symbolic link of the code library.
 # from this directory, run $ ln -s /path/to/library
-# NOTE: Should avoid needing lib if all we're taking is an inner defn...
 #
 # As long as nrows*ncols = len(mag_values), you can pick whatever
 # configuration of rows and columns you want the panels arranged in.

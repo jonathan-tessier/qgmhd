@@ -123,7 +123,8 @@ class physical_parameters(object):
                             'ME', \
                             'A2', 'Ave A', \
                             'Ave j', 'grow_A', 'Helicity', \
-                            'u2', 'v2', 'b12','b22','qx2','qy2','jx2','jy2','lorentz']
+                            'u2', 'v2', 'b12','b22','qx2','qy2','jx2','jy2', \
+                            'lorentz','grow_psi','lap_psi', 'psi2']
 
         self.Nd = len(self.diag_fields)
 
@@ -142,15 +143,13 @@ def output_diagnostics(diagvals, cnt, t):
     TE    = diagvals[cnt,0] + diagvals[cnt,1] + diagvals[cnt,5]
     print("time=%3.3f, Energy=%10.10f, A2=%10.10f, Helicity=%10.10f, Pert q=%10.10e, Pert A=%10.10e"
           % (t, TE,  diagvals[cnt,6], diagvals[cnt,10], diagvals[cnt,4], diagvals[cnt,9]))
+    if TE>1e100:
+        raise(ValueError("Energy has diverged. Reduce timestep."))
 
 # Computes/Completes the Initial condtions from only q and A
 def compute_ICs_from_qA(soln, soln_bar, phys, T, TV, VM):
 
-    # Compute scalars
-    soln.psi[:] = T.backward(-soln.grid.K2F2inv*soln.qA_hat[0], soln.psi)
-    soln.j[:]   = T.backward(-soln.grid.K2*soln.qA_hat[1], soln.j)
-
-    # Compute vectors
+    # Compute u and b vectors
     for i in range(2):
         ip = (i + 1) % 2
         soln.u[i][:]     = T.backward( (-1)**i*soln.grid.iKoK2F2[ip]*soln.qA_hat[0], soln.u[i])
@@ -169,12 +168,12 @@ def flux_qgmhd(soln, soln_bar, phys, T, TV, VM):
     Rm    = phys.Rm
     MHD   = phys.MHD
 
-    # Compute scalars
+    # Compute scalars where applicable
     soln.psi[:] = T.backward(-soln.grid.K2F2inv*soln.qA_hat[0], soln.psi)
     j_hat = -soln.grid.K2*soln.qA_hat[1]
     soln.j[:] = T.backward( j_hat, soln.j)
 
-    # Compute vectors
+    # Compute vectors u,b
     for i in range(2):
         
         ip = (i + 1) % 2
@@ -221,6 +220,8 @@ def flux_qgmhd(soln, soln_bar, phys, T, TV, VM):
 
     # compute the total q and A for diagnostics
     qA_total = soln.qA + soln_bar.qA
+    psi_total= soln.psi + soln_bar.psi
+
     # domain area for total field computations
     Area_xy = soln.grid.Lx*soln.grid.Ly
 
@@ -245,7 +246,10 @@ def flux_qgmhd(soln, soln_bar, phys, T, TV, VM):
         np.mean(soln.gradq[1]**2)*Area_xy,
         np.mean(M2*soln.gradj[0]**2)*Area_xy,
         np.mean(M2*soln.gradj[1]**2)*Area_xy,
-        np.mean(M2*inner(soln.b,soln.gradj))*Area_xy
+        np.mean(M2*inner(soln.b,soln.gradj))*Area_xy,
+        np.linalg.norm(soln.psi)/Nx,
+        np.mean((qA_total[0]+F2*psi_total)**2)*Area_xy,
+        np.mean(psi_total**2)*Area_xy
     ))
     return flux, norms
 

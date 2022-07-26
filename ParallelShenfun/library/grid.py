@@ -109,7 +109,7 @@ def generate_broad_spectrum_field(T,size,grid,kstar,sigma,npseed,amp):
 
     kxx, kyy = grid.K[0], grid.K[1]
     krr = np.sqrt(kxx**2  + kyy**2)
-    window = np.exp(-(krr/(sigma*kstar))**2)
+    window = np.exp(-((krr-kstar)/sigma)**2)
     noise = Function(T); np.random.seed(npseed)
     noise = T.forward(np.random.uniform(-1., 1., size=size), noise)
 

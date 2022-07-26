@@ -80,6 +80,7 @@ def plot_field(soln, t):
     plt.title('A perturbation at t=%4.3f' %t)
 
     plt.draw()
+    plt.show()
     plt.pause(0.001)
 
 # for parallel runs, this creates the global diagnostics from the saved fields.
@@ -160,7 +161,7 @@ def generate_diagnostics(phys,times,grid,folder,T0):
 
     # dataset generation
     fileh5py     = h5py.File(file_name, "w")
-    norms_vals   = fileh5py.create_dataset("values", (Nt,20), dtype='double')
+    norms_vals   = fileh5py.create_dataset("values", (Nt,len(phys.diag_fields)), dtype='double')
     norms_times  = fileh5py.create_dataset("times",  (3,),  data=(t0, tf-dtplot, dtplot))
     norms_twrite = fileh5py.create_dataset("twrite", data=tplot)
     norms_domain = fileh5py.create_dataset("domain", data=domain)
@@ -219,26 +220,29 @@ def generate_diagnostics(phys,times,grid,folder,T0):
 
         # compute diagnostics
         norms_vals[ii]  = np.array((
-            mean_norm(0.5*inner(u_total,u_total)),        # KE
-            mean_norm(0.5*F2*psi_total**2),               # PE
-            mean_norm(q_total**2),                        # q2
-            mean_norm(q_total),                           # q
-            l2_norm(q),                                   # q_pert
-            mean_norm(0.5*MHD*M2*inner(b_total,b_total)), # ME
-            mean_norm(M2*A_total**2),                     # A2
-            mean_norm(np.sqrt(M2)*A_total),               # A
-            mean_norm(M2*j**2),                           # j2
-            l2_norm(np.sqrt(M2)*A),                       # A_pert
-            mean_norm(inner(u_total,np.sqrt(M2)*b_total)),# H..
-            mean_norm(u_total[0]**2),                     # u^2 for anisotropy measure
-            mean_norm(u_total[1]**2),                     # v^2 for anisotropy measure
-            mean_norm(M2*b_total[0]**2),                  # b1^2 for anisotropy measure
-            mean_norm(M2*b_total[1]**2),                  # b2^2 for anisotropy measure
-            mean_norm(gradq[0]**2),                       # q_x^2 for anisotropy measure
-            mean_norm(gradq[1]**2),                       # q_y^2 for anisotropy measure
-            mean_norm(M2*gradj[0]**2),                    # j_x^2 for anisotropy measure
-            mean_norm(M2*gradj[1]**2),                    # j_y^2 for anisotropy measure
-            mean_norm(M2*np.sqrt(inner(b_total,gradj)**2))# lorentz force bulk quantity
+            mean_norm(0.5*inner(u_total,u_total)),         # KE
+            mean_norm(0.5*F2*psi_total**2),                # PE
+            mean_norm(q_total**2),                         # q2
+            mean_norm(q_total),                            # q
+            l2_norm(q),                                    # q_pert
+            mean_norm(0.5*MHD*M2*inner(b_total,b_total)),  # ME
+            mean_norm(M2*A_total**2),                      # A2
+            mean_norm(np.sqrt(M2)*A_total),                # A
+            mean_norm(M2*j**2),                            # j2
+            l2_norm(np.sqrt(M2)*A),                        # A_pert
+            mean_norm(inner(u_total,np.sqrt(M2)*b_total)), # H..
+            mean_norm(u_total[0]**2),                      # u^2 for anisotropy measure
+            mean_norm(u_total[1]**2),                      # v^2 for anisotropy measure
+            mean_norm(M2*b_total[0]**2),                   # b1^2 for anisotropy measure
+            mean_norm(M2*b_total[1]**2),                   # b2^2 for anisotropy measure
+            mean_norm(gradq[0]**2),                        # q_x^2 for anisotropy measure
+            mean_norm(gradq[1]**2),                        # q_y^2 for anisotropy measure
+            mean_norm(M2*gradj[0]**2),                     # j_x^2 for anisotropy measure
+            mean_norm(M2*gradj[1]**2),                     # j_y^2 for anisotropy measure
+            mean_norm(M2*np.sqrt(inner(b_total,gradj)**2)),# lorentz force bulk quantity
+            l2_norm(psi),                                  # psi_pert
+            mean_norm((q_total+F2*psi_total)**2),          # lap(psi)^2
+            mean_norm(psi_total**2)                        # psi^2q
         ))
     print("Done.")
 

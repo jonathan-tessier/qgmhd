@@ -15,12 +15,8 @@
 # so the suffixes to your directory names, in mag_values.
 # The code will extract the actual value of M from each output.
 #
-# As long as nrows*ncols = len(mag_values), you can pick whatever
-# configuration of rows and columns you want the panels arranged in.
-# The code will go left to right and top to bottom in the order of 
-# provided mag_values. This code is however restricted to plotting 
-# more than one case. For a single run, consider scripts without 
-# the 'aggregate' prefix.
+# This scripts further requires a symbolic link of the code library.
+# from this directory, run $ ln -s /path/to/library
 
 # imports
 import h5py
@@ -69,7 +65,7 @@ lims = [1e-1, 1e11]
 full_field = False 
 
 # time bounds for temporal averaging
-[t_begin,t_end] = [100,300] 
+[t_begin,t_end] = [240,260] 
 
 # set the directories you want to read from
 case_prefix = "turbB0-F2-0"
@@ -78,12 +74,11 @@ case_prefix = "turbB0-F2-0"
 #mag_values = ["hydro","1em6","1em5","1em4","1em3","1em2","1em1","1em0"]
 mag_values = ["hydro","1em6","1em4","1em2"]
 
-# figure panel config
-ncols,  nrows  = [int(len(mag_values)), 1];
-hscale, vscale = [2.5,2.5];
-figsize=(hscale*ncols, vscale*nrows+1)
+# fixed fig size..
+figsize=(5,5)
 
-assert(ncols*nrows == int(len(mag_values))),"Number of simulations doesn't fit in the grid."
+# fig format (eps,png,both)
+save_format = "both"
 
 diagfilename_array = []; fieldfilename_array = []
 
@@ -199,6 +194,7 @@ TE_vec = np.zeros([len(mag_values),len(tplot),len(kbin)])
 for index in range(len(mag_values)):
 
     print("Now computing M2 = %1e" % M2_vector[index])
+    M2 = M2_vector[index]
 
     for ii in range(first,last+1):
     
@@ -224,10 +220,10 @@ for index in range(len(mag_values)):
         # to actually be the spectrum we talk about in spectral fluxes
         scale = 0.5*L[0]*L[1]/(4*np.pi**2)
 
-        PEspectrum = scale*F2*np.fft.fftshift(abs(psi_hat)**2)
+        PEspectrum = scale*np.fft.fftshift(abs(psi_hat)**2)
         KEspectrum = scale*np.fft.fftshift(abs(u_hat)**2+abs(v_hat)**2)
-        MEspectrum = scale*M2_vector[index]*np.fft.fftshift(abs(b1_hat)**2+abs(b2_hat)**2)
-        TEspectrum = KEspectrum + PEspectrum +  MEspectrum
+        MEspectrum = scale*np.fft.fftshift(abs(b1_hat)**2+abs(b2_hat)**2)
+        TEspectrum = KEspectrum + F2*PEspectrum +  M2*MEspectrum
 
         KEbin = np.zeros(kbin.shape)
         MEbin = np.zeros(kbin.shape)
@@ -248,26 +244,26 @@ for index in range(len(mag_values)):
         TE_vec[index,ii] = TEbin
 
 ## create averaged figure..
+fig_TE, axesTE = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=figsize)
+#fig_TE.suptitle(r'Total Energy Spectrum')
 
-fig_TE, axesTE = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True, figsize=figsize)
-fig_TE.suptitle('Total Energy Spectrum')
+fig_KE, axesKE = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=figsize)
+#fig_KE.suptitle(r'Kinetic Energy Spectrum')
 
-fig_KE, axesKE = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True, figsize=figsize)
-fig_KE.suptitle('Kinetic Energy Spectrum')
+fig_PE, axesPE = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=figsize)
+#fig_PE.suptitle(r'Potential Energy Spectrum')
 
-fig_PE, axesPE = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True, figsize=figsize)
-fig_PE.suptitle('Potential Energy Spectrum')
-
-fig_ME, axesME = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True, figsize=figsize)
-fig_ME.suptitle('Magnetic Energy Spectrum')
+fig_ME, axesME = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=figsize)
+#fig_ME.suptitle(r'Magnetic Energy Spectrum')
 
 print("Finished Creating Datasets, now averaging...")
 
 ### one loop iteration for each value of M and in each plot all fields..
 
-for index in range(len(mag_values)):
+color_index = ['-k','-r','-g','-b']
+lw = 2
 
-    axii = panelindex(index,ncols,nrows)
+for index in range(len(mag_values)):
 
     KEbin = np.mean(KE_vec[index,first:last+1,:],axis=0)
     MEbin = np.mean(ME_vec[index,first:last+1,:],axis=0)
@@ -282,47 +278,57 @@ for index in range(len(mag_values)):
         p3 = np.polyfit(np.log10(kbin[I1]), np.log10(TEbin[I1]), 1)
         p4 = np.polyfit(np.log10(kbin[I1]), np.log10(PEbin[I1]), 1)
 
-    for axes in [axesTE,axesKE,axesME,axesPE]:
-        axes[axii].set_title(r"$M^2 = $"+fmt(M2_vector[index]))
-        if nrows==1 or (nrows>1 and axii[0]==nrows-1): axes[axii].set_xlabel("wavenumber (k)");
-        axes[axii].grid(True)
+    axesKE.loglog(kbin[1:], KEmult*KEbin[1:], color_index[index], linewidth = lw, \
+        label=r'$M^2 = $'+fmt(M2_vector[index])+r', $\alpha = $ % 2.2f' % p1[0])
+    #axesKE.loglog(kbin[1:], KEmult*pow(10,np.polyval(p1,np.log10(kbin[1:]))), '-k')
+    #axesKE.loglog(kbin[I1[0]], TEmult[I1[0]]*pow(10,np.polyval(p1,np.log10(kbin[I1[0]]))), 'og')
+    #axesKE.loglog(kbin[I1[-1]], TEmult[I1[-1]]*pow(10,np.polyval(p1,np.log10(kbin[I1[-1]]))), 'og')
 
-    axesKE[axii].loglog(kbin[1:], KEmult*KEbin[1:], 'ob')
-    axesKE[axii].loglog(kbin[1:], KEmult*pow(10,np.polyval(p1,np.log10(kbin[1:]))), '-k', label=r'$\hat E_V$ Slope: % 2.2f' % p1[0])
-    axesKE[axii].loglog(kbin[I1[0]], TEmult[I1[0]]*pow(10,np.polyval(p1,np.log10(kbin[I1[0]]))), 'or')
-    axesKE[axii].loglog(kbin[I1[-1]], TEmult[I1[-1]]*pow(10,np.polyval(p1,np.log10(kbin[I1[-1]]))), 'or')
-    if lims_on: axesKE[axii].set_ylim(lims);
-    axesKE[axii].legend(loc='lower left');
+    axesPE.loglog(kbin[1:], PEmult*PEbin[1:], color_index[index], linewidth = lw, \
+        label=r'$M^2 = $'+fmt(M2_vector[index])+r', $\alpha = $ % 2.2f' % p4[0])
+    #axesPE.loglog(kbin[1:], PEmult*pow(10,np.polyval(p4,np.log10(kbin[1:]))), '-k')
+    #axesPE.loglog(kbin[I1[0]], PEmult[I1[0]]*pow(10,np.polyval(p4,np.log10(kbin[I1[0]]))), 'og')
+    #axesPE.loglog(kbin[I1[-1]], PEmult[I1[-1]]*pow(10,np.polyval(p4,np.log10(kbin[I1[-1]]))), 'og')
 
-    axesPE[axii].loglog(kbin[1:], PEmult*PEbin[1:], 'ob')
-    axesPE[axii].loglog(kbin[1:], PEmult*pow(10,np.polyval(p4,np.log10(kbin[1:]))), '-k', label=r'$\hat E_P$ Slope: % 2.2f' % p4[0])
-    axesPE[axii].loglog(kbin[I1[0]], PEmult[I1[0]]*pow(10,np.polyval(p4,np.log10(kbin[I1[0]]))), 'or')
-    axesPE[axii].loglog(kbin[I1[-1]], PEmult[I1[-1]]*pow(10,np.polyval(p4,np.log10(kbin[I1[-1]]))), 'or')
-    if lims_on: axesPE[axii].set_ylim(lims);
-    axesPE[axii].legend(loc='lower left');
+    axesME.loglog(kbin[1:], MEmult*MEbin[1:], color_index[index], linewidth = lw, \
 
-    axesME[axii].loglog(kbin[1:], MEmult*MEbin[1:], 'ob')
-    axesME[axii].loglog(kbin[1:], MEmult*pow(10,np.polyval(p2,np.log10(kbin[1:]))), '-k', label=r'$\hat E_M$ Slope: % 2.2f' % p2[0])
-    axesME[axii].loglog(kbin[I1[0]], MEmult[I1[0]]*pow(10,np.polyval(p2,np.log10(kbin[I1[0]]))), 'or')
-    axesME[axii].loglog(kbin[I1[-1]], MEmult[I1[-1]]*pow(10,np.polyval(p2,np.log10(kbin[I1[-1]]))), 'or')
-    if lims_on: axesME[axii].set_ylim(lims);
-    axesME[axii].legend(loc='lower left');
+        label=r'$M^2 = $'+fmt(M2_vector[index])+r', $\alpha = $ % 2.2f' % p2[0])
+    #axesME.loglog(kbin[1:], MEmult*pow(10,np.polyval(p2,np.log10(kbin[1:]))), '-k')
+    #axesME.loglog(kbin[I1[0]], MEmult[I1[0]]*pow(10,np.polyval(p2,np.log10(kbin[I1[0]]))), 'og')
+    #axesME.loglog(kbin[I1[-1]], MEmult[I1[-1]]*pow(10,np.polyval(p2,np.log10(kbin[I1[-1]]))), 'og')
 
-    axesTE[axii].loglog(kbin[1:], TEmult*TEbin[1:], 'ob')
-    axesTE[axii].loglog(kbin[1:], TEmult*pow(10,np.polyval(p3,np.log10(kbin[1:]))), '-k', label=r'$\hat E$ Slope: % 2.2f' % p3[0])
-    axesTE[axii].loglog(kbin[I1[0]], TEmult[I1[0]]*pow(10,np.polyval(p3,np.log10(kbin[I1[0]]))), 'or')
-    axesTE[axii].loglog(kbin[I1[-1]], TEmult[I1[-1]]*pow(10,np.polyval(p3,np.log10(kbin[I1[-1]]))), 'or')
-    if lims_on: axesTE[axii].set_ylim(lims);
-    axesTE[axii].legend(loc='lower left');
+    axesTE.loglog(kbin[1:], TEmult*TEbin[1:], color_index[index], linewidth = lw, \
+        label=r'$M^2 = $'+fmt(M2_vector[index])+r', $\alpha = $ % 2.2f' % p3[0])
+    #axesTE.loglog(kbin[1:], TEmult*pow(10,np.polyval(p3,np.log10(kbin[1:]))), '-k')
+    #axesTE.loglog(kbin[I1[0]], TEmult[I1[0]]*pow(10,np.polyval(p3,np.log10(kbin[I1[0]]))), 'og')
+    #axesTE.loglog(kbin[I1[-1]], TEmult[I1[-1]]*pow(10,np.polyval(p3,np.log10(kbin[I1[-1]]))), 'og')
 
-fig_TE.tight_layout()
-fig_TE.savefig("qgmhd_TE_N{}.png".format(N[0]))
-fig_PE.tight_layout()
-fig_PE.savefig("qgmhd_PE_N{}.png".format(N[0]))
-fig_KE.tight_layout()
-fig_KE.savefig("qgmhd_KE_N{}.png".format(N[0]))
-fig_ME.tight_layout()
-fig_ME.savefig("qgmhd_ME_N{}.png".format(N[0]))
+axesTE.set_ylabel(r"$\hat E$");
+axesKE.set_ylabel(r"$\hat E_K$");
+axesME.set_ylabel(r"$\hat E_M$");
+axesPE.set_ylabel(r"$\hat E_P$");
+
+for axes in [axesTE,axesKE,axesME,axesPE]:
+    axes.set_xlabel("wavenumber (k)");
+    axes.grid(True)
+    if lims_on: axes.set_ylim(lims);
+    axes.legend(loc='lower left')
+
+for fig in [fig_TE, fig_PE, fig_KE, fig_ME]:
+    fig.tight_layout()
+    #fig.subplots_adjust(bottom=0.3)
+    #fig.legend(loc='lower center',fancybox=True, shadow=True, ncol=2,fontsize=9)
+
+if save_format == 'png' or save_format == 'both':
+    fig_TE.savefig("qgmhd_TE_N{}.png".format(N[0]))
+    fig_PE.savefig("qgmhd_PE_N{}.png".format(N[0]))
+    fig_KE.savefig("qgmhd_KE_N{}.png".format(N[0]))
+    fig_ME.savefig("qgmhd_ME_N{}.png".format(N[0]))
+if save_format == 'eps' or save_format == 'both':
+    fig_TE.savefig("qgmhd_TE_N{}.eps".format(N[0]))
+    fig_PE.savefig("qgmhd_PE_N{}.eps".format(N[0]))
+    fig_KE.savefig("qgmhd_KE_N{}.eps".format(N[0]))
+    fig_ME.savefig("qgmhd_ME_N{}.eps".format(N[0]))
 
 print("Done.")
 
