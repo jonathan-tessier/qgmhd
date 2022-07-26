@@ -33,7 +33,7 @@ Example: Vorticity snapshot of an unstable Bickley jet (without any magnetism) i
 
 Example: Vorticity snapshot of decaying 2D-MHD turbulence
 
-<img src="Images/mhd-pv.jpg" alt="" width="400" height="400"/>
+<img src="Images/mhd-pv.png" alt="" width="400" height="400"/>
 
 `Shenfun` Installation: Please see the relevant instructions at [shenfun.readthedocs.io](https://shenfun.readthedocs.io/en/latest/installation.html)
 
