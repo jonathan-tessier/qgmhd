@@ -1,6 +1,7 @@
 # Quasi-Geostrophic Magnetohydrodynamics
 
 This repository contains codes to study Quasi-Geostrophic Magnetohydrodynamics (QG-MHD). 
+
 By: Jonathan Tessier and Francis J. Poulin
 
 ## Nonlinear Evolution
