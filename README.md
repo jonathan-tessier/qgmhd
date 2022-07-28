@@ -51,6 +51,8 @@ $$\begin{bmatrix}
         \hat\psi  \\
         \hat A 
     \end{bmatrix}.$$
+    
+This code uses spectral methods and in particular `Chebyshev` differnetiation matrices to compute derivatives in the y-direction.    
 
 ## Examples
 
