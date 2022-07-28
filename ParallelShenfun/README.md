@@ -9,6 +9,10 @@
   - in serial: `$ python3 qgmhd_shenfun.py`. 
   - in parallel on Compute Canada (on submit script): `$ srun python3 qgmhd_shenfun.py`
   - in parallel on other architectures: `$ mpiexec -np X python3 qgmhd_shenfun.py`
+- To visualize results:
+  - run `read_diagnostics.py` to plot timeseries of the diagnostics (scalars)
+  - run `read_fields.py` to make animations of the fields
+  - refer to `AdditionalDiagnostics` for additional outputs
 
 ## Directory
 
