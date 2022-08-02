@@ -22,7 +22,7 @@ The nondimensional parameters are
 
    $F = \frac{L}{R_d}, \quad M = \frac{V_A}{U}, \quad R_e = \frac{\nu}{UL}, \quad R_m = \frac{\kappa}{UL}$,
    
-where $R_d=\sqrt{gH}/f$ is the external Rossby radius of deformation and $V_A=B_0/\sqrt{\mu\rho}$ is the Aflvén wave speed, for gravity $g$, mean depth $H$, Coriolis frequency $f$, magnetic field strength ($B_0$), magnetic permeability ($\mu$) and fluid density ($\rho$). $R_e$ and $R_m$ are the hydrodynamic and magnetic Reynolds numbers with viscosity ($\nu$) and magnetic diffusivity ($\kappa$). 
+where $R_d=\sqrt{gH}/f$ is the external Rossby radius of deformation and $V_A=B_0/\sqrt{\mu\rho}$ is the Aflvén wave speed, for gravity $g$, mean depth $H$, Coriolis frequency $f$, magnetic field strength $B_0$, magnetic permeability $\mu$ and fluid density $\rho$. $R_e$ and $R_m$ are the hydrodynamic and magnetic Reynolds numbers with viscosity $\nu$ and magnetic diffusivity $\kappa$. 
 
 For the original derivation of the dimensional equations, see: [Zeitlin, V. (2013). Remarks on rotating shallow-water magnetohydrodynamics.](https://www.semanticscholar.org/paper/Remarks-on-rotating-shallow-water-Zeitlin/b2b294b16feaafecc4b17926d0128894c8153860)
 
