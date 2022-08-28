@@ -10,17 +10,25 @@ By: Jonathan Tessier and Francis J. Poulin
 
 The nonlinear equations read (ignoring diffusion on the background):
 
-   $\partial_t q + {\bf u}  \cdot {\bf \nabla} q =  M^2 {\bf b} \cdot {\bf \nabla}  j + \frac{1}{R_e}\nabla^2(q-\bar q),$
+$$
+\partial_t q + {\bf u}  \cdot {\bf \nabla} q =  M^2 {\bf b} \cdot {\bf \nabla}  j + \frac{1}{R_e}\nabla^2(q-\bar q),
+$$
 
-   $\partial _t A + {\bf u} \cdot {\bf \nabla} A  =  \frac{1}{R_m}\nabla^2(A-\bar A),$
+$$
+\partial_t A + {\bf u} \cdot {\bf \nabla} A  =  \frac{1}{R_m}\nabla^2(A-\bar A),
+$$
 
-where (for a kinetic streamfunction $\psi$, and magnetic streamfunction $A$)
+where for a kinetic streamfunction $(\psi)$, and magnetic streamfunction $(A)$,
 
-   $q  = \nabla^2 \psi - F^2 \psi, \quad j = \nabla^2 A, \quad {\bf u}  = \hat{z}\cdot\nabla\times \psi, \quad {\bf b}  = \hat{z}\cdot\nabla\times A.$
+$$
+q = \nabla^2 \psi - F^2 \psi, \quad j = \nabla^2 A, \quad {\bf u}  = \hat{z}\cdot\nabla\times \psi, \quad {\bf b}  = \hat{z}\cdot\nabla\times A.
+$$
   
 The nondimensional parameters are 
 
-   $F = \frac{L}{R_d}, \quad M = \frac{V_A}{U}, \quad R_e = \frac{\nu}{UL}, \quad R_m = \frac{\kappa}{UL}$,
+$$
+F = \frac{L}{R_d}, \quad M = \frac{V_A}{U}, \quad R_e = \frac{\nu}{UL}, \quad R_m = \frac{\kappa}{UL},
+$$
    
 where $R_d=\sqrt{gH}/f$ is the external Rossby radius of deformation and $V_A=B_0/\sqrt{\mu\rho}$ is the Aflvén wave speed, for gravity $g$, mean depth $H$, Coriolis frequency $f$, magnetic field strength $B_0$, magnetic permeability $\mu$ and fluid density $\rho$. $R_e$ and $R_m$ are the hydrodynamic and magnetic Reynolds numbers with viscosity $\nu$ and magnetic diffusivity $\kappa$. 
 
@@ -30,8 +38,12 @@ To turn off the Lorentz force, set $M=0$. $A$ is then a passive tracer advected 
 
 ## Linear Stability Analysis
 
-`LinearStability` solves the linear stability of parallel shear flows such as a Bickley jet. Linearizing the QG-MHD equations about a background state in geostrophic balance, we neglect the advection of the perturbation by the pertubation but still maintain the advection of the pertrubation by the mean state and the advection of the mean state by the perturbation. Assuming a normal mode decomposition on the perturbations, 
-$$\psi' = \hat \psi(y) \exp[i (k x - \omega t)], \quad\quad A' = \hat A(y) \exp[i (k x - \omega t)],$$
+`LinearStability` solves the linear stability of parallel shear flows such as a Bickley jet. Linearizing the QG-MHD equations about a background state in geostrophic balance, we neglect the advection of the perturbation by the pertubation but still maintain the advection of the pertrubation by the mean state and the advection of the mean state by the perturbation. Assuming a normal mode decomposition on the perturbations,
+
+$$
+\psi' = \hat \psi(y) \exp[i (k x - \omega t)], \quad\quad A' = \hat A(y) \exp[i (k x - \omega t)],
+$$
+
 we can generate an eigenvalue problem where the eigenvalue $c=\omega/k$ determines the growth rate $\omega_i$ and the phase speed $\omega_r$ of the unstable mode, and the eigenfunctions $(\hat \psi, \hat A)$ show the spatial structure in the y-direction. This transforms the Laplacian operator such that $\hat\nabla^2 = \partial_{yy}-k^2$ and we find the generalized EVP to read (for background velocity $U(y)$ and field $B(y)$ )
 
 $$\begin{bmatrix}
