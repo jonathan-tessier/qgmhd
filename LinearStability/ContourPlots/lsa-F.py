@@ -2,6 +2,7 @@ import numpy as np
 import scipy.linalg as spalg
 import matplotlib.pyplot as plt
 import sys
+import h5py
 
 try: # Try using mpi
     from mpi4py import MPI
@@ -15,7 +16,7 @@ print("Proc {0:d} of {1:d}".format(rank+1,num_procs))
 
 # Physical parameters
 L     = 8*np.pi                     # Length of domain
-N     = 256                         # Number of grid points
+N     = 512                         # Number of grid points
 F     = 0.0                         # Froude number
 M2    = 0.0                         # Magnetic number
 beta  = 0.0                         # nondim beta from coriolis
@@ -28,6 +29,9 @@ Rminv = 1/Rm       # Inverse Reynolds number to allow for inviscid case
 # Jet parameters
 Lj = 1.0                           # width of jet
 Uj = 1.0                           # maximum velocity of jet
+
+# save dataset
+save2h5 = True
 
 if rank==0:
     print("Computational Parameters:")
@@ -90,20 +94,17 @@ Uyy= np.dot(Dyy,U)
 B0 = np.ones(np.shape(y)) 
 Byy= np.dot(Dyy,B0)
 
-
 # Define range of parameters
-dk = 5e-2; kk = np.arange(dk,2+dk,dk); Nk = len(kk);
-
+dk = 2e-2; kk = np.arange(dk,2+dk,dk); Nk = len(kk);
 FF = np.linspace(0,1,100); NF = len(FF);
-#MM = np.linspace(0,0.1,5); NM = len(MM);
-#bb = np.linspace(0,1,5); Nb = len(bb);
 
 # Define storage vectors: DIM = [psi, a]x[num modes]x[num wavenumbers]x[num <param>] = 2 x Ne x Nk x N<>
 Ne = 4
 #c_vals = np.zeros((Ne,Nk),dtype=complex)
 grow = np.zeros((Ne,Nk,NF))
 freq = np.zeros((Ne,Nk,NF))
-#modes = np.zeros((2,N+1,Ne,Nk,NF),dtype=complex)
+p_modes = np.zeros((N+1,Ne,Nk,NF),dtype=complex)
+a_modes = np.zeros((N+1,Ne,Nk,NF),dtype=complex)
 
 # Loop over <parameter>
 p_cnt = 0
@@ -135,14 +136,44 @@ for p_cnt in range(NF):
         #c_vals[:,cnt,p_cnt] = eigVals[0:Ne]/k
         grow[:,cnt,p_cnt] = eigVals[0:Ne].imag
         freq[:,cnt,p_cnt] = eigVals[0:Ne].real
-        #modes[0,1:N,:,cnt,p_cnt] = eigVecs[0:N-1,0:Ne]
-        #modes[1,1:N,:,cnt,p_cnt] = eigVecs[N-1:2*N,0:Ne]
+        p_modes[1:N,:,cnt,p_cnt] = eigVecs[0:N-1,0:Ne]
+        a_modes[1:N,:,cnt,p_cnt] = eigVecs[N-1:2*N,0:Ne]
+
         print (' - Wavenumber (', int(cnt+1), '/', int(Nk),')', ': ',"{:.2f}".format(k),', Growth: ',"{:.4f}".format(grow[0,cnt,p_cnt]),', Phase: ',"{:.4f}".format(freq[0,cnt,p_cnt]))
         cnt += 1
+
     grow[:,:,p_cnt] = comm.reduce(grow[:,:,p_cnt],op=MPI.SUM, root=0)    
     freq[:,:,p_cnt] = comm.reduce(freq[:,:,p_cnt],op=MPI.SUM, root=0)
+    p_modes[:,:,:,p_cnt] = comm.reduce(p_modes[:,:,:,p_cnt],op=MPI.SUM, root=0)
+    a_modes[:,:,:,p_cnt] = comm.reduce(a_modes[:,:,:,p_cnt],op=MPI.SUM, root=0)
     p_cnt+=1
 print("Done!")
+
+# Output parameters for pickup files in HDF5
+if save2h5 and rank==0:
+    filename = "output.h5"                        # output filename
+    file = h5py.File(filename, mode="w")          # output file
+
+    # save parameters
+    file.create_dataset("L",   data = L)      
+    file.create_dataset("N",   data = N) 
+    file.create_dataset("Ne",  data = Ne)
+    file.create_dataset("F",   data = FF)    
+    file.create_dataset("M2",  data = M2)          
+    file.create_dataset("kk",  data = kk)      
+    file.create_dataset("Re",  data = Re)
+    file.create_dataset("Rm",  data = Rm)
+    file.create_dataset("beta",data = beta)
+    file.create_dataset("Lj",  data = Lj)
+    file.create_dataset("Uj",  data = Uj)
+
+    # Output Fields
+    output_grow  = file.create_dataset('grow', data=grow) # growth rate
+    output_freq  = file.create_dataset('freq', data=freq) # frequency
+    output_pmode = file.create_dataset('p_mode', data=p_modes) # Psi Modes
+    output_amode = file.create_dataset('a_mode', data=a_modes) # A Modes
+
+    print("File "+filename+" opened")
 
 if rank==0:
     for which_mode in range(2):
